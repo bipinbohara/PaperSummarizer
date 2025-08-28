@@ -9,7 +9,7 @@ import requests
 from dotenv import load_dotenv
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
-
+from preprocess_pdfs import vectorize_pdf
 # -------- Paths & config (no args) --------
 BASE_DIR    = Path(__file__).resolve().parent
 INDEX_DIR   = BASE_DIR / "vector_db"
