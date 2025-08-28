@@ -4,11 +4,51 @@ metadata:
   name: paper-summary
   namespace: workspace-<your-name-here>
 spec:
-  containers:
-  - name: python
-    image: python:3.11-slim
-    command: ["sleep", "infinity"]
-    volumeMounts:
-    - name: paper-summary-storage
-      mountPath: /mnt/data  # mount point inside container
   restartPolicy: Never
+  volumes:
+    - name: paper-summary-storage
+      persistentVolumeClaim:
+        claimName: paper-summary-storage-pvc
+  containers:
+    - name: python
+      image: cicirello/pyaction
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - name: paper-summary-storage
+          mountPath: /mnt/data
+      command: ["/bin/bash", "-lc"]
+      args:
+        - |
+          set -euo pipefail
+          cd /mnt/data
+          if [ ! -d "PaperSummarizer/.git" ]; then
+            git clone https://github.com/bipinbohara/PaperSummarizer.git
+          else
+            echo "Repo already exists. Pulling latest..."
+            (cd PaperSummarizer && git pull --ff-only || true)
+          fi
+
+          echo "Installing Python dependencies..."
+          cd /mnt/data/PaperSummarizer
+          if [ -f requirements.txt ]; then
+            pip install --no-cache-dir -r requirements.txt
+          else
+            echo "No requirements.txt found, skipping pip install"
+          fi
+
+          echo "Repo ready at /mnt/data/PaperSummarizer"
+          sleep infinity
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paper-summary-storage-pvc
+  namespace: workspace-<your-name-here>
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+  volumeMode: Filesystem
