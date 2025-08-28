@@ -1,0 +1,7 @@
+langchain>=0.2.2
+langchain-huggingface>=0.3
+sentence-transformers==5.0.0
+faiss-cpu>=1.7
+redis>=5.0
+PyPDF2>=3.0
+python-dotenv>=1.0
