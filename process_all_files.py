@@ -73,7 +73,7 @@ def call_llm(
         payload = {
             "model": model,
             "prompt": f"System: {system_prompt}\n\nUser:\n{user_content}",
-            "max_tokens": 512,
+            #"max_tokens": 512,
             "temperature": 0.0,
             "stream": False,
         }
