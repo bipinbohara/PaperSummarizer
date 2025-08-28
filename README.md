@@ -29,8 +29,8 @@ chmode +x run_execution.sh
 ./run_execution.sh
 ```
 
-#### Copy files/directory:
-From local machine to GPU cluster account:
+### Copy files/directory:
+From local machine to GPU cluster account: Execute this from your local machine
 ```
 scp -r "/Users/username/Desktop/ResearchPapers/" sys-head-admin@131.151.54.248:~"/Desktop/ResearchPapers/"
 ```
@@ -38,10 +38,20 @@ Example:
 ```
 File will be saved from AI Agents to Papers in GPU cluster
 
-scp -r "/Users/bbdzv/Desktop/Research Papers/AI Agents/." sys-head-admin@131.151.54.248:~"/Desktop/Papers/"
+scp -r "/Users/bbdzv/Desktop/Research Papers/AI Agents/." <your-user-name-GPU-Cluster>@131.151.54.248:~"/Desktop/Papers/"
 ```
 
-From GPU Machine to container:
+From GPU Machine to container: execute this from the GPU cluster/ Head Node
 ```
 kubectl cp "/home/<your-user-in-GPU-Cluster>/Desktop/Papers/." workspace-<your-name-here>/paper-summary:/mnt/data/PaperSummarizer/data -c python
 ```
+
+### Copy output file back to your local machine: Execute this from the GPU cluster/ Head Node
+```
+kubectl cp workspace-<your-name-here>/paper-summary:/mnt/data/PaperSummarizer/output/. -c python "/home/<your-user-in-GPU-Cluster>/Desktop/Papers/Output/."
+```
+Local terminal:
+```
+scp -r <your-user-name-GPU-Cluster>@131.151.54.248:~"/Desktop/Papers/Output/." ~"/Desktop/Research Papers/Output"
+```
+
