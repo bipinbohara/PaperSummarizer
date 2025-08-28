@@ -22,7 +22,7 @@ LLM_MODEL   = os.environ.get("LLM_MODEL", "openai/gpt-oss-120b")
 # LLM_API_KEY = os.environ.get("LLM_API_KEY")  # not needed for local LLM
 
 SYSTEM_PROMPT = (
-    "You are a research assistant. Give me a detailed information from the research paper."
+    "You are a research assistant. Produce a thorough, exhaustive summary."
 
 )
 TIMEOUT = 600  # seconds
@@ -73,7 +73,7 @@ def call_llm(
         payload = {
             "model": model,
             "prompt": f"System: {system_prompt}\n\nUser:\n{user_content}",
-            #"max_tokens": 512,
+            "max_tokens": 4096,
             "temperature": 0.0,
             "stream": False,
         }
@@ -85,7 +85,7 @@ def call_llm(
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content},
             ],
-            #"max_tokens": 512,
+            "max_tokens": 4096,
             "temperature": 0.0,
             "stream": False,
         }
