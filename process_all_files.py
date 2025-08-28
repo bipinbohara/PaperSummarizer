@@ -23,7 +23,7 @@ LLM_MODEL   = os.environ.get("LLM_MODEL", "openai/gpt-oss-120b")
 
 SYSTEM_PROMPT = (
     "You are a research assistant. Produce a thorough, exhaustive summary."
-
+    "Avoid repetition. Use headings and bullet points. Length: as long as needed."
 )
 TIMEOUT = 600  # seconds
 
