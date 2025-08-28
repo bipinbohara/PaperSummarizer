@@ -155,4 +155,5 @@ def main() -> None:
     print(f"Done. Results -> {out_path}")
 
 if __name__ == "__main__":
+    vectorize_pdf()
     main()
