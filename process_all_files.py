@@ -22,8 +22,8 @@ LLM_MODEL   = os.environ.get("LLM_MODEL", "openai/gpt-oss-120b")
 # LLM_API_KEY = os.environ.get("LLM_API_KEY")  # not needed for local LLM
 
 SYSTEM_PROMPT = (
-    "You are a research assistant. Produce a thorough, exhaustive summary."
-    "Avoid repetition. Use headings and bullet points. Length: as long as needed."
+    "You are a research assistant. Produce a thorough, one paragraph summary."
+    "Avoid repetition. DO not use headings and bullet points. Length: as concise as needed."
 )
 TIMEOUT = 600  # seconds
 
