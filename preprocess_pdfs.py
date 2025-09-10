@@ -153,9 +153,9 @@ def vectorize_pdf():
     metadatas = [d.metadata for d in docs]
 
     print("About to embed:", len(texts), "texts")
-    print("Types of first few:", [type(t) for t in texts[:5]])
-    if texts:
-        print("Sample texts[0] (first 120 chars):", texts[0][:40000].replace("\n", " "))
+    for i in range len(texts)
+        if texts:
+            print(f"Sample texts[{i}] (first 1000 chars):", texts[i][:1000].replace("\n \n", " "))
 
     vector_store = FAISS.from_texts(texts, embeddings, metadatas=metadatas, normalize_L2=True)
     # ---- END KEY CHANGES ----
