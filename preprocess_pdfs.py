@@ -152,10 +152,10 @@ def vectorize_pdf():
     texts = [d.page_content if isinstance(d.page_content, str) else str(d.page_content) for d in docs]
     metadatas = [d.metadata for d in docs]
 
-    print("About to embed:", len(texts), "texts")
-    for i in range (0,len(texts)):
-        if texts:
-            print(f"Sample texts[{i}] (first 1000 chars):", texts[i][:1000].replace("\n \n", " "))
+    # print("About to embed:", len(texts), "texts")
+    # for i in range (0,len(texts)):
+    #     if texts:
+    #         print(f"Sample texts[{i}] (first 1000 chars):", texts[i][:1000].replace("\n \n", " "))
 
     vector_store = FAISS.from_texts(texts, embeddings, metadatas=metadatas, normalize_L2=True)
     # ---- END KEY CHANGES ----
