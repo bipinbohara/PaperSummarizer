@@ -153,7 +153,7 @@ def vectorize_pdf():
     metadatas = [d.metadata for d in docs]
 
     print("About to embed:", len(texts), "texts")
-    for i in range (0,len(texts))
+    for i in range (0,len(texts)):
         if texts:
             print(f"Sample texts[{i}] (first 1000 chars):", texts[i][:1000].replace("\n \n", " "))
 
