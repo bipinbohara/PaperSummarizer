@@ -100,9 +100,7 @@ def vectorize_pdf():
     load_dotenv()
 
     preprocessed_directory = DATA_DIR
-    files = [os.path.join(preprocessed_directory, f)
-             for f in os.listdir(preprocessed_directory)
-             if f.endswith(".pdf")]
+    files = [os.path.join(preprocessed_directory, f) for f in os.listdir(preprocessed_directory) if f.endswith(".pdf")]
     if not files:
         logging.info("No PDF files found in data directory. Skipping vectorization.")
         return
@@ -114,16 +112,21 @@ def vectorize_pdf():
         try:
             with open(file, "rb") as f:
                 reader = PdfReader(f)
+                # call extract_text() once per page, collect only real strings
                 page_texts = []
                 for page in reader.pages:
                     try:
-                        t = page.extract_text()  # call once
+                        t = page.extract_text()
                     except Exception as e:
                         logging.warning("Skipping a page in %s due to read error: %s", os.path.basename(file), e)
                         continue
+                    if isinstance(t, bytes):
+                        try:
+                            t = t.decode("utf-8", errors="ignore")
+                        except Exception:
+                            t = str(t)
                     if isinstance(t, str) and t.strip():
                         page_texts.append(t)
-
                 text = "\n".join(page_texts).strip()
         except Exception as e:
             logging.warning("Skipping unreadable PDF %s: %s", os.path.basename(file), e)
@@ -135,38 +138,29 @@ def vectorize_pdf():
             skipped += 1
             continue
 
-        # Create Document with metadata (optional: include filename, etc.)
-        doc = Document(page_content=text, metadata={"source": os.path.basename(file)})
-        docs.append(doc)
+        docs.append(Document(page_content=text, metadata={"source": os.path.basename(file)}))
 
     if not docs:
         logging.error("No valid documents to index. (Skipped %d files.)", skipped)
         return
 
-    # Embeddings (keep your original parameter style)
-    embeddings = HuggingFaceEmbeddings(model="sentence-transformers/all-MiniLM-L6-v2", show_progress=True)
+    # ---- KEY CHANGES BELOW ----
+    # 1) Use model_name= (not model=)
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2", show_progress=True)
 
-    # Sanity-check before building the index
-    bad = [(i, type(d.page_content), d.metadata.get("source"))
-           for i, d in enumerate(docs) if not isinstance(d.page_content, str)]
-    empty = [d.metadata.get("source") for d in docs if isinstance(d.page_content, str) and not d.page_content.strip()]
-    
-    print("Non-string contents:", bad[:500])
-    print("Empty-string docs:", empty[:500])
-    
-    # Drop anything that isn't a real string with content
-    docs = [d for d in docs if isinstance(d.page_content, str) and d.page_content.strip()]
-    
-    if not docs:
-        raise RuntimeError("All PDFs were unreadable/empty after sanitation; no docs to embed.")
+    # 2) Pass plain texts yourself (avoid from_documents internal conversion path)
+    texts = [d.page_content if isinstance(d.page_content, str) else str(d.page_content) for d in docs]
+    metadatas = [d.metadata for d in docs]
 
-    # Build FAISS index from documents
-    vector_store = FAISS.from_documents(docs, embeddings, normalize_L2=True)
+    vector_store = FAISS.from_texts(texts, embeddings, metadatas=metadatas, normalize_L2=True)
+    # ---- END KEY CHANGES ----
+
     INDEX_PATH.mkdir(parents=True, exist_ok=True)
     vector_store.save_local(INDEX_PATH)
 
     logging.info("Vectorization complete. Indexed %d docs. Skipped %d files.", len(docs), skipped)
     print("end")
+
 
 def search_similarity(query):
     if not (INDEX_PATH / "index.faiss").exists():
