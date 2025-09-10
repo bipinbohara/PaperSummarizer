@@ -24,26 +24,62 @@ print(DATA_DIR)
 def vectorize_pdf():
     logging.warning("vectorize_pdf from %s  DATA_DIR=%s", __file__, DATA_DIR)
     load_dotenv()
-    #preprocessed_directory = #os.path.join("data/")
-    preprocessed_directory = DATA_DIR
-    files = [os.path.join(preprocessed_directory, f) for f in os.listdir(preprocessed_directory) if f.endswith(".pdf")]
+
+    ##OLDER
+    # preprocessed_directory = DATA_DIR
+    # files = [os.path.join(preprocessed_directory, f) for f in os.listdir(preprocessed_directory) if f.endswith(".pdf")]
+    # if not files:
+    #     logging.info("No PDF files found in data directory. Skipping vectorization.")
+    #     return
+
+    # docs = []
+
+    # for file in files:
+    #     with open(file, "rb") as f:
+    #         reader = PdfReader(f)
+    #         text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+
+    #         # Create Document with metadata (optional: include filename, etc.)
+    #         doc = Document(page_content=text, metadata={"source": os.path.basename(file)})
+    #         docs.append(doc)
+
+    # #INDEX_PATH = Path("vector_db")
+    ##OLDER
+
+    files = [os.path.join(preprocessed_directory, f)
+             for f in os.listdir(preprocessed_directory)
+             if f.endswith(".pdf")]
     if not files:
         logging.info("No PDF files found in data directory. Skipping vectorization.")
         return
 
     docs = []
+    skipped = 0
 
     for file in files:
-        with open(file, "rb") as f:
-            reader = PdfReader(f)
-            text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+        try:
+            with open(file, "rb") as f:
+                reader = PdfReader(f)
+                page_texts = []
+                for page in reader.pages:
+                    try:
+                        t = page.extract_text()  # call once
+                    except Exception as e:
+                        logging.warning("Skipping a page in %s due to read error: %s", os.path.basename(file), e)
+                        continue
+                    if isinstance(t, str) and t.strip():
+                        page_texts.append(t)
 
-            # Create Document with metadata (optional: include filename, etc.)
-            doc = Document(page_content=text, metadata={"source": os.path.basename(file)})
-            docs.append(doc)
+                text = "\n".join(page_texts).strip()
+        except Exception as e:
+            logging.warning("Skipping unreadable PDF %s: %s", os.path.basename(file), e)
+            skipped += 1
+            continue
 
-    #INDEX_PATH = Path("vector_db")
-
+        if not text:
+            logging.warning("Skipping %s: no extractable text.", os.path.basename(file))
+            skipped += 1
+            continue
     # Embeddings
     #embeddings = HuggingFaceEmbeddings(model=EMBED_MODEL, show_progress=True)
     embeddings = HuggingFaceEmbeddings(model="sentence-transformers/all-MiniLM-L6-v2", show_progress=True)
