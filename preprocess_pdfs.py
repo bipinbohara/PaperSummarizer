@@ -155,7 +155,7 @@ def vectorize_pdf():
     print("About to embed:", len(texts), "texts")
     print("Types of first few:", [type(t) for t in texts[:5]])
     if texts:
-        print("Sample texts[0] (first 120 chars):", texts[0][:120].replace("\n", " "))
+        print("Sample texts[0] (first 120 chars):", texts[0][:40000].replace("\n", " "))
 
     vector_store = FAISS.from_texts(texts, embeddings, metadatas=metadatas, normalize_L2=True)
     # ---- END KEY CHANGES ----
