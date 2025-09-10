@@ -21,31 +21,85 @@ print(BASE_DIR)
 print(INDEX_PATH)
 print(DATA_DIR)
 
+# def vectorize_pdf():
+#     logging.warning("vectorize_pdf from %s  DATA_DIR=%s", __file__, DATA_DIR)
+#     load_dotenv()
+
+#     ##OLDER
+#     # preprocessed_directory = DATA_DIR
+#     # files = [os.path.join(preprocessed_directory, f) for f in os.listdir(preprocessed_directory) if f.endswith(".pdf")]
+#     # if not files:
+#     #     logging.info("No PDF files found in data directory. Skipping vectorization.")
+#     #     return
+
+#     # docs = []
+
+#     # for file in files:
+#     #     with open(file, "rb") as f:
+#     #         reader = PdfReader(f)
+#     #         text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+
+#     #         # Create Document with metadata (optional: include filename, etc.)
+#     #         doc = Document(page_content=text, metadata={"source": os.path.basename(file)})
+#     #         docs.append(doc)
+
+#     # #INDEX_PATH = Path("vector_db")
+#     ##OLDER
+
+#     files = [os.path.join(preprocessed_directory, f)
+#              for f in os.listdir(preprocessed_directory)
+#              if f.endswith(".pdf")]
+#     if not files:
+#         logging.info("No PDF files found in data directory. Skipping vectorization.")
+#         return
+
+#     docs = []
+#     skipped = 0
+
+#     for file in files:
+#         try:
+#             with open(file, "rb") as f:
+#                 reader = PdfReader(f)
+#                 page_texts = []
+#                 for page in reader.pages:
+#                     try:
+#                         t = page.extract_text()  # call once
+#                     except Exception as e:
+#                         logging.warning("Skipping a page in %s due to read error: %s", os.path.basename(file), e)
+#                         continue
+#                     if isinstance(t, str) and t.strip():
+#                         page_texts.append(t)
+
+#                 text = "\n".join(page_texts).strip()
+#         except Exception as e:
+#             logging.warning("Skipping unreadable PDF %s: %s", os.path.basename(file), e)
+#             skipped += 1
+#             continue
+
+#         if not text:
+#             logging.warning("Skipping %s: no extractable text.", os.path.basename(file))
+#             skipped += 1
+#             continue
+#     # Embeddings
+#     #embeddings = HuggingFaceEmbeddings(model=EMBED_MODEL, show_progress=True)
+#     embeddings = HuggingFaceEmbeddings(model="sentence-transformers/all-MiniLM-L6-v2", show_progress=True)
+
+#     vector_store = FAISS.from_documents(docs, embeddings, normalize_L2=True)
+
+#     # ---- move underlying index to GPU ----
+#     # res = FAISS.StandardGpuResources()
+#     # gpu_index = FAISS.index_cpu_to_gpu(res, 0, vector_store.index)
+#     # vector_store.index = gpu_index        # swap in the GPU handle
+#     #
+#     # vector_store.index = FAISS.index_gpu_to_cpu(vector_store.index)
+#     vector_store.save_local(INDEX_PATH)
+#     print("end")
+
 def vectorize_pdf():
     logging.warning("vectorize_pdf from %s  DATA_DIR=%s", __file__, DATA_DIR)
     load_dotenv()
 
-    ##OLDER
-    # preprocessed_directory = DATA_DIR
-    # files = [os.path.join(preprocessed_directory, f) for f in os.listdir(preprocessed_directory) if f.endswith(".pdf")]
-    # if not files:
-    #     logging.info("No PDF files found in data directory. Skipping vectorization.")
-    #     return
-
-    # docs = []
-
-    # for file in files:
-    #     with open(file, "rb") as f:
-    #         reader = PdfReader(f)
-    #         text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-
-    #         # Create Document with metadata (optional: include filename, etc.)
-    #         doc = Document(page_content=text, metadata={"source": os.path.basename(file)})
-    #         docs.append(doc)
-
-    # #INDEX_PATH = Path("vector_db")
-    ##OLDER
-
+    preprocessed_directory = DATA_DIR
     files = [os.path.join(preprocessed_directory, f)
              for f in os.listdir(preprocessed_directory)
              if f.endswith(".pdf")]
@@ -80,19 +134,24 @@ def vectorize_pdf():
             logging.warning("Skipping %s: no extractable text.", os.path.basename(file))
             skipped += 1
             continue
-    # Embeddings
-    #embeddings = HuggingFaceEmbeddings(model=EMBED_MODEL, show_progress=True)
+
+        # Create Document with metadata (optional: include filename, etc.)
+        doc = Document(page_content=text, metadata={"source": os.path.basename(file)})
+        docs.append(doc)
+
+    if not docs:
+        logging.error("No valid documents to index. (Skipped %d files.)", skipped)
+        return
+
+    # Embeddings (keep your original parameter style)
     embeddings = HuggingFaceEmbeddings(model="sentence-transformers/all-MiniLM-L6-v2", show_progress=True)
 
+    # Build FAISS index from documents
     vector_store = FAISS.from_documents(docs, embeddings, normalize_L2=True)
-
-    # ---- move underlying index to GPU ----
-    # res = FAISS.StandardGpuResources()
-    # gpu_index = FAISS.index_cpu_to_gpu(res, 0, vector_store.index)
-    # vector_store.index = gpu_index        # swap in the GPU handle
-    #
-    # vector_store.index = FAISS.index_gpu_to_cpu(vector_store.index)
+    INDEX_PATH.mkdir(parents=True, exist_ok=True)
     vector_store.save_local(INDEX_PATH)
+
+    logging.info("Vectorization complete. Indexed %d docs. Skipped %d files.", len(docs), skipped)
     print("end")
 
 def search_similarity(query):
