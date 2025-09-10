@@ -151,8 +151,8 @@ def vectorize_pdf():
            for i, d in enumerate(docs) if not isinstance(d.page_content, str)]
     empty = [d.metadata.get("source") for d in docs if isinstance(d.page_content, str) and not d.page_content.strip()]
     
-    print("Non-string contents:", bad[:10])
-    print("Empty-string docs:", empty[:10])
+    print("Non-string contents:", bad[:500])
+    print("Empty-string docs:", empty[:500])
     
     # Drop anything that isn't a real string with content
     docs = [d for d in docs if isinstance(d.page_content, str) and d.page_content.strip()]
