@@ -146,6 +146,20 @@ def vectorize_pdf():
     # Embeddings (keep your original parameter style)
     embeddings = HuggingFaceEmbeddings(model="sentence-transformers/all-MiniLM-L6-v2", show_progress=True)
 
+    # Sanity-check before building the index
+    bad = [(i, type(d.page_content), d.metadata.get("source"))
+           for i, d in enumerate(docs) if not isinstance(d.page_content, str)]
+    empty = [d.metadata.get("source") for d in docs if isinstance(d.page_content, str) and not d.page_content.strip()]
+    
+    print("Non-string contents:", bad[:10])
+    print("Empty-string docs:", empty[:10])
+    
+    # Drop anything that isn't a real string with content
+    docs = [d for d in docs if isinstance(d.page_content, str) and d.page_content.strip()]
+    
+    if not docs:
+        raise RuntimeError("All PDFs were unreadable/empty after sanitation; no docs to embed.")
+
     # Build FAISS index from documents
     vector_store = FAISS.from_documents(docs, embeddings, normalize_L2=True)
     INDEX_PATH.mkdir(parents=True, exist_ok=True)
