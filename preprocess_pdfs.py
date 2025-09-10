@@ -152,6 +152,11 @@ def vectorize_pdf():
     texts = [d.page_content if isinstance(d.page_content, str) else str(d.page_content) for d in docs]
     metadatas = [d.metadata for d in docs]
 
+    print("About to embed:", len(texts), "texts")
+    print("Types of first few:", [type(t) for t in texts[:5]])
+    if texts:
+        print("Sample texts[0] (first 120 chars):", texts[0][:120].replace("\n", " "))
+
     vector_store = FAISS.from_texts(texts, embeddings, metadatas=metadatas, normalize_L2=True)
     # ---- END KEY CHANGES ----
 
@@ -160,7 +165,6 @@ def vectorize_pdf():
 
     logging.info("Vectorization complete. Indexed %d docs. Skipped %d files.", len(docs), skipped)
     print("end")
-
 
 def search_similarity(query):
     if not (INDEX_PATH / "index.faiss").exists():
